@@ -74,6 +74,7 @@
         #st-dot.active { background: #fff; box-shadow: 0 0 6px #fff; }
 
         .item { display: flex; flex-direction: column; gap: 6px; width: 100%; flex-shrink: 0; }
+        .item.hidden { display: none; }
         label { color: var(--dim); font-weight: 700; text-transform: uppercase; font-size: 8px; display: flex; justify-content: space-between; }
         label span { color: var(--accent); }
         
@@ -97,36 +98,34 @@
 
         #resizer { width: 3px; background: #111; cursor: col-resize; z-index: 10; }
 
-        #canvas-wrap { flex-grow: 1; background: var(--bg); overflow-y: auto; position: relative; min-width: 0; scroll-behavior: smooth; }
+        #canvas-wrap { flex-grow: 1; background: var(--bg); overflow: hidden; position: relative; min-width: 0; }
         
-        #grid-canvas { width: 100%; height: auto; min-height: 100%; }
+        #grid-canvas { width: 100%; height: 100%; }
 
-        /* Kinetic Engine Styles */
-        .stream-container { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; }
+        /* Default 模式容器：支持滚动 */
+        .static-container {
+            width: 100%; height: 100%; overflow-y: auto; padding: 40px 0;
+            display: flex; flex-direction: column; align-items: center; gap: 15px;
+            scroll-behavior: smooth;
+        }
+        .static-line {
+            font-size: 24px; font-weight: 900; text-align: center; text-transform: uppercase;
+            width: 90%; animation: blurCycle 4s ease-in-out infinite;
+        }
+        @keyframes blurCycle {
+            0%, 100% { filter: blur(0px); opacity: 1; }
+            50% { filter: blur(4px); opacity: 0.3; }
+        }
+
+        /* Kinetic 专用 */
+        .stream-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
         .stream-row { flex: 1; display: flex; align-items: center; white-space: nowrap; overflow: hidden; border-bottom: 0.1px solid rgba(255,255,255,0.05); }
         .stream-track { display: flex; will-change: transform; }
 
-        /* Swiss Engine Styles: Vertical List with Multi-Column Support */
-        .swiss-grid {
-            display: grid;
-            width: 100%;
-            height: auto;
-            gap: 0;
-        }
+        /* Swiss 专用 */
+        .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cell-w), 1fr)); grid-auto-rows: minmax(var(--cell-h), 1fr); width: 100%; height: 100%; }
 
-        .swiss-unit {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            border: 0.1px solid rgba(255,255,255,0.05);
-            padding: 20px 0;
-        }
-
-        .u { 
-            display: flex; align-items: center; justify-content: center; 
-            font-weight: 900; text-transform: uppercase; white-space: nowrap; 
-            line-height: 1.1; width: 100%;
-        }
+        .u { display: flex; align-items: center; justify-content: center; font-weight: 900; text-transform: uppercase; white-space: nowrap; padding: 0 10px; line-height: 1; overflow: hidden; }
 
         @keyframes sS { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(var(--stretch-val)); } }
         @keyframes marqueeL { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
@@ -161,23 +160,24 @@
                 <div class="item full">
                     <label>PRESET</label>
                     <select id="in-mode">
-                        <option value="swiss" selected>Swiss Vertical</option>
+                        <option value="default" selected>Static List (Default)</option>
+                        <option value="swiss">Swiss Vertical</option>
                         <option value="kinetic">Kinetic Warp (Stream Engine)</option>
                     </select>
                 </div>
-                <div class="item">
-                    <label id="label-stretch">STRETCH <span>0.1</span></label>
-                    <input type="range" id="in-stretch" min="0.1" max="1.0" step="0.05" value="0.1">
+                <div class="item ctrl-node">
+                    <label id="label-stretch">STRETCH <span>1</span></label>
+                    <input type="range" id="in-stretch" min="0.1" max="1.0" step="0.05" value="1">
                 </div>
-                <div class="item">
-                    <label id="label-font">SCALE <span>1.0</span></label>
-                    <input type="range" id="in-font" min="0.1" max="10.0" step="0.1" value="1.0">
+                <div class="item ctrl-node">
+                    <label id="label-font">SCALE <span>2</span></label>
+                    <input type="range" id="in-font" min="0.2" max="5.0" step="0.1" value="2">
                 </div>
-                <div class="item">
-                    <label id="label-rows">COLUMNS <span>1</span></label>
-                    <input type="range" id="in-rows" min="1" max="6" step="1" value="1">
+                <div class="item ctrl-node">
+                    <label id="label-rows">DENSITY <span>200</span></label>
+                    <input type="range" id="in-rows" min="10" max="200" step="1" value="200">
                 </div>
-                <div class="item">
+                <div class="item ctrl-node">
                     <label id="label-seed">SEED <span>1</span></label>
                     <input type="range" id="in-seed" min="1" max="100" step="1" value="1">
                 </div>
@@ -203,31 +203,38 @@
     <script>
     (function() {
         const PRESET_CONFIGS = {
+            default: {
+                hideControls: true,
+                colorTxt: "#ffffff",
+                colorBg: "#000000"
+            },
             swiss: {
-                stretch: 0.1, 
-                stretchMin: 0.1, stretchMax: 1.0,
-                font: 1.0,    
-                rows: 1,      // In Swiss mode, this is Columns
-                rowsMin: 1, rowsMax: 6,
+                stretch: 1.0, 
+                stretchMin: 0.1,
+                stretchMax: 1.0,
+                font: 2.0,    
+                rows: 200,     
                 seed: 1,      
                 labelStretch: "STRETCH",
-                labelDensity: "COLUMNS",
-                colorTxt: "#ffffff", colorBg: "#000000"
+                colorTxt: "#ffffff",
+                colorBg: "#000000",
+                hideControls: false
             },
             kinetic: {
                 stretch: 0.1, 
-                stretchMin: 0.1, stretchMax: 10.0,
+                stretchMin: 0.1,
+                stretchMax: 10.0,
                 font: 1.0,    
-                rows: 60,     // In Kinetic mode, this is Row Count
-                rowsMin: 10, rowsMax: 200,
+                rows: 60,     
                 seed: 1,      
                 labelStretch: "FLOW_SPEED",
-                labelDensity: "DENSITY",
-                colorTxt: "#ffffff", colorBg: "#000000"
+                colorTxt: "#ffffff",
+                colorBg: "#000000",
+                hideControls: false
             }
         };
 
-        let pool = ["Connecting Babel..."];
+        let pool = ["Loading Babel Core..."];
         const panel = document.getElementById('panel');
         const resizer = document.getElementById('resizer');
         const canvas = document.getElementById('grid-canvas');
@@ -240,6 +247,8 @@
             if (!isResizing) return;
             if (window.innerWidth > 900) {
                 panel.style.width = Math.max(200, Math.min(e.clientX, window.innerWidth * 0.7)) + 'px';
+            } else {
+                panel.style.height = Math.max(180, Math.min(e.clientY - 32, window.innerHeight * 0.8)) + 'px';
             }
             render();
         });
@@ -255,21 +264,27 @@
             const mode = e.target.value;
             const cfg = PRESET_CONFIGS[mode];
             
-            const sInput = document.getElementById('in-stretch');
-            sInput.min = cfg.stretchMin;
-            sInput.max = cfg.stretchMax;
-            sInput.value = cfg.stretch;
+            // 隐藏/显示 调节轴
+            const ctrlNodes = document.querySelectorAll('.ctrl-node');
+            ctrlNodes.forEach(node => {
+                if(cfg.hideControls) node.classList.add('hidden');
+                else node.classList.remove('hidden');
+            });
 
-            const dInput = document.getElementById('in-rows');
-            dInput.min = cfg.rowsMin;
-            dInput.max = cfg.rowsMax;
-            dInput.value = cfg.rows;
+            if(!cfg.hideControls) {
+                const sInput = document.getElementById('in-stretch');
+                sInput.min = cfg.stretchMin;
+                sInput.max = cfg.stretchMax;
+                sInput.value = cfg.stretch;
+                document.getElementById('in-font').value = cfg.font;
+                document.getElementById('in-rows').value = cfg.rows;
+                document.getElementById('in-seed').value = cfg.seed;
+                document.getElementById('label-stretch').firstChild.textContent = cfg.labelStretch + " ";
+            }
             
-            document.getElementById('in-font').value = cfg.font;
-            document.getElementById('in-seed').value = cfg.seed;
-            document.getElementById('label-stretch').firstChild.textContent = cfg.labelStretch + " ";
-            document.getElementById('label-rows').firstChild.textContent = cfg.labelDensity + " ";
-            
+            document.getElementById('in-color-text').value = cfg.colorTxt;
+            document.getElementById('in-color-bg').value = cfg.colorBg;
+
             updateLabels();
             render();
         };
@@ -294,7 +309,10 @@
             document.getElementById('st-dot').classList.remove('active');
             
             try {
-                const langs = ['zh-CN','ja','ko','fr','de','ru','es','it','ar','hi','pt','tr','vi','pl','nl','sv','no','da','fi','el','he','id','ms','th','cs','hu','ro','sk','uk','bg','hr','lt','lv','et','sl','ga','is','sw','eo','la'];
+                const langs = [
+                    'zh-CN','ja','ko','fr','de','ru','es','it','ar','hi','pt','tr','vi','pl','nl','sv','no','da','fi','el','he','id','ms','th',
+                    'cs','hu','ro','sk','uk','bg','hr','lt','lv','et','sl','ga','is','sw','eo','la'
+                ];
                 const res = await Promise.all(langs.map(async l => {
                     const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${l}&dt=t&q=${encodeURI(text)}`);
                     const d = await r.json(); return d[0][0][0];
@@ -321,8 +339,19 @@
             wrap.style.backgroundColor = bgCol;
             canvas.innerHTML = '';
             
-            if (mode === 'kinetic') {
-                wrap.style.overflowY = 'hidden';
+            if (mode === 'default') {
+                canvas.className = 'static-container';
+                canvas.style.display = 'flex';
+                pool.forEach((word, idx) => {
+                    const line = document.createElement('div');
+                    line.className = 'static-line global-font';
+                    line.style.color = txtCol;
+                    // 交替动画延迟
+                    line.style.animationDelay = (idx * 0.15) + 's';
+                    line.innerText = word;
+                    canvas.appendChild(line);
+                });
+            } else if (mode === 'kinetic') {
                 canvas.className = 'stream-container';
                 canvas.style.display = 'flex';
                 const canvasH = wrap.offsetHeight;
@@ -346,42 +375,29 @@
                     canvas.appendChild(rowDiv);
                 }
             } else {
-                // Swiss Vertical: Vertical List Layout
-                wrap.style.overflowY = 'auto';
-                canvas.className = 'swiss-grid';
+                canvas.className = 'grid-layout';
                 canvas.style.display = 'grid';
-                canvas.style.gridTemplateColumns = `repeat(${density}, 1fr)`;
-                
-                // We create 'density' number of columns, each containing the full 40 translations
-                for (let colIdx = 0; colIdx < density; colIdx++) {
-                    const unit = document.createElement('div');
-                    unit.className = 'swiss-unit';
-                    
-                    pool.forEach((txt, idx) => {
-                        const span = document.createElement('span');
-                        span.className = 'u global-font';
-                        span.innerText = txt;
-                        span.style.color = txtCol;
-                        
-                        // Font size logic: Responsive to column count and scale
-                        const baseFontSize = (wrap.offsetWidth / density / 10) * fontScale;
-                        span.style.fontSize = baseFontSize + "px";
-                        
-                        // Stretch logic
-                        span.style.setProperty('--stretch-val', 1 + stretch * 3);
-                        const animDuration = 0.8 + ((idx + colIdx + seed) % 5) * 0.4;
-                        span.style.animation = `sS ${animDuration}s ease-in-out infinite`;
-                        
-                        unit.appendChild(span);
-                    });
-                    canvas.appendChild(unit);
+                const cellSize = Math.max(20, 1000 / density) * fontScale;
+                canvas.style.setProperty('--cell-w', cellSize + 'px');
+                canvas.style.setProperty('--cell-h', (cellSize * 0.6) + 'px');
+                const totalCells = density * 5;
+                for (let i = 0; i < totalCells; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'u global-font';
+                    cell.innerText = pool[(i + seed) % pool.length];
+                    cell.style.color = txtCol;
+                    cell.style.fontSize = (cellSize * 0.4) + "px";
+                    cell.style.setProperty('--stretch-val', 1 + stretch * 2);
+                    const animDuration = 1.5 + (i % 5) * 0.2;
+                    cell.style.animation = `sS ${animDuration}s ease-in-out infinite`;
+                    canvas.appendChild(cell);
                 }
             }
         }
 
         window.copyDynamicEmbed = () => { 
             const btn = document.getElementById('export-btn');
-            btn.innerText = "COPIED_T0_CLIPBOARD";
+            btn.innerText = "COPIED_TO_CLIPBOARD";
             setTimeout(() => btn.innerText = "EXPORT_DYNAMIC_EMBED", 2000);
         };
 
@@ -391,6 +407,7 @@
         };
 
         window.addEventListener('resize', render);
+        // 初始化
         document.getElementById('in-mode').dispatchEvent(new Event('change'));
         fetchL(document.getElementById('in-text').value);
     })();
