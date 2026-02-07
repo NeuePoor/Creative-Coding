@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BABEL_GEN_v5.1</title>
-    <!-- 引入更多语系的 Noto 字体以支持全球化字符显示 -->
+    <title>BABEL_GEN_v5.2</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&family=Noto+Sans+SC:wght@900&family=Noto+Sans+JP:wght@900&family=Noto+Sans+KR:wght@900&family=Noto+Sans+Thai:wght@900&family=Noto+Sans+Arabic:wght@900&family=Noto+Sans+Devanagari:wght@900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -27,7 +26,6 @@
             flex-direction: column; 
         }
 
-        /* 强大的多语言回退字体栈 */
         .global-font { 
             font-family: 'Inter', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans Thai', 'Noto Sans Arabic', 'Noto Sans Devanagari', sans-serif; 
         }
@@ -99,38 +97,35 @@
 
         #resizer { width: 3px; background: #111; cursor: col-resize; z-index: 10; }
 
-        #canvas-wrap { flex-grow: 1; background: var(--bg); overflow: hidden; position: relative; min-width: 0; }
+        #canvas-wrap { flex-grow: 1; background: var(--bg); overflow-y: auto; position: relative; min-width: 0; scroll-behavior: smooth; }
         
-        #grid-canvas { 
-            width: 100%; height: 100%; 
-        }
+        #grid-canvas { width: 100%; height: auto; min-height: 100%; }
 
-        /* Kinetic 专用 */
-        .stream-container {
-            display: flex; flex-direction: column; width: 100%; height: 100%;
-        }
-        .stream-row {
-            flex: 1; display: flex; align-items: center; white-space: nowrap; overflow: hidden;
-            border-bottom: 0.1px solid rgba(255,255,255,0.05);
-        }
-        .stream-track {
-            display: flex; will-change: transform;
-        }
+        /* Kinetic Engine Styles */
+        .stream-container { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; }
+        .stream-row { flex: 1; display: flex; align-items: center; white-space: nowrap; overflow: hidden; border-bottom: 0.1px solid rgba(255,255,255,0.05); }
+        .stream-track { display: flex; will-change: transform; }
 
-        /* Swiss 专用：网格布局 */
-        .grid-layout {
+        /* Swiss Engine Styles: Vertical List with Multi-Column Support */
+        .swiss-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(var(--cell-w), 1fr));
-            grid-auto-rows: minmax(var(--cell-h), 1fr);
             width: 100%;
-            height: 100%;
+            height: auto;
+            gap: 0;
+        }
+
+        .swiss-unit {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            border: 0.1px solid rgba(255,255,255,0.05);
+            padding: 20px 0;
         }
 
         .u { 
             display: flex; align-items: center; justify-content: center; 
             font-weight: 900; text-transform: uppercase; white-space: nowrap; 
-            padding: 0 10px; line-height: 1; 
-            overflow: hidden;
+            line-height: 1.1; width: 100%;
         }
 
         @keyframes sS { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(var(--stretch-val)); } }
@@ -152,7 +147,7 @@
 
     <nav id="navbar">
         <div id="nav-left"><button id="toggle-btn" onclick="toggleP()">✕</button></div>
-        <div id="nav-right"><span class="nav-version">BABEL_GEN_v5.1</span></div>
+        <div id="nav-right"><span class="nav-version">BABEL_GEN_v5.2</span></div>
     </nav>
 
     <div id="app-body">
@@ -176,11 +171,11 @@
                 </div>
                 <div class="item">
                     <label id="label-font">SCALE <span>1.0</span></label>
-                    <input type="range" id="in-font" min="0.2" max="5.0" step="0.1" value="1.0">
+                    <input type="range" id="in-font" min="0.1" max="10.0" step="0.1" value="1.0">
                 </div>
                 <div class="item">
-                    <label id="label-rows">DENSITY <span>50</span></label>
-                    <input type="range" id="in-rows" min="10" max="200" step="1" value="50">
+                    <label id="label-rows">COLUMNS <span>1</span></label>
+                    <input type="range" id="in-rows" min="1" max="6" step="1" value="1">
                 </div>
                 <div class="item">
                     <label id="label-seed">SEED <span>1</span></label>
@@ -207,33 +202,32 @@
 
     <script>
     (function() {
-        // --- 核心预设配置 ---
         const PRESET_CONFIGS = {
             swiss: {
                 stretch: 0.1, 
-                stretchMin: 0.1,
-                stretchMax: 1.0,
+                stretchMin: 0.1, stretchMax: 1.0,
                 font: 1.0,    
-                rows: 50,     
+                rows: 1,      // In Swiss mode, this is Columns
+                rowsMin: 1, rowsMax: 6,
                 seed: 1,      
                 labelStretch: "STRETCH",
-                colorTxt: "#ffffff",
-                colorBg: "#000000"
+                labelDensity: "COLUMNS",
+                colorTxt: "#ffffff", colorBg: "#000000"
             },
             kinetic: {
                 stretch: 0.1, 
-                stretchMin: 0.1,
-                stretchMax: 10.0,
+                stretchMin: 0.1, stretchMax: 10.0,
                 font: 1.0,    
-                rows: 60,     
+                rows: 60,     // In Kinetic mode, this is Row Count
+                rowsMin: 10, rowsMax: 200,
                 seed: 1,      
                 labelStretch: "FLOW_SPEED",
-                colorTxt: "#ffffff",
-                colorBg: "#000000"
+                labelDensity: "DENSITY",
+                colorTxt: "#ffffff", colorBg: "#000000"
             }
         };
 
-        let pool = ["Loading Babel Core..."];
+        let pool = ["Connecting Babel..."];
         const panel = document.getElementById('panel');
         const resizer = document.getElementById('resizer');
         const canvas = document.getElementById('grid-canvas');
@@ -246,8 +240,6 @@
             if (!isResizing) return;
             if (window.innerWidth > 900) {
                 panel.style.width = Math.max(200, Math.min(e.clientX, window.innerWidth * 0.7)) + 'px';
-            } else {
-                panel.style.height = Math.max(180, Math.min(e.clientY - 32, window.innerHeight * 0.8)) + 'px';
             }
             render();
         });
@@ -263,19 +255,20 @@
             const mode = e.target.value;
             const cfg = PRESET_CONFIGS[mode];
             
-            // 动态调整滑动条范围
             const sInput = document.getElementById('in-stretch');
             sInput.min = cfg.stretchMin;
             sInput.max = cfg.stretchMax;
             sInput.value = cfg.stretch;
+
+            const dInput = document.getElementById('in-rows');
+            dInput.min = cfg.rowsMin;
+            dInput.max = cfg.rowsMax;
+            dInput.value = cfg.rows;
             
             document.getElementById('in-font').value = cfg.font;
-            document.getElementById('in-rows').value = cfg.rows;
             document.getElementById('in-seed').value = cfg.seed;
-            document.getElementById('in-color-text').value = cfg.colorTxt;
-            document.getElementById('in-color-bg').value = cfg.colorBg;
-
             document.getElementById('label-stretch').firstChild.textContent = cfg.labelStretch + " ";
+            document.getElementById('label-rows').firstChild.textContent = cfg.labelDensity + " ";
             
             updateLabels();
             render();
@@ -301,10 +294,7 @@
             document.getElementById('st-dot').classList.remove('active');
             
             try {
-                const langs = [
-                    'zh-CN','ja','ko','fr','de','ru','es','it','ar','hi','pt','tr','vi','pl','nl','sv','no','da','fi','el','he','id','ms','th',
-                    'cs','hu','ro','sk','uk','bg','hr','lt','lv','et','sl','ga','is','sw','eo','la'
-                ];
+                const langs = ['zh-CN','ja','ko','fr','de','ru','es','it','ar','hi','pt','tr','vi','pl','nl','sv','no','da','fi','el','he','id','ms','th','cs','hu','ro','sk','uk','bg','hr','lt','lv','et','sl','ga','is','sw','eo','la'];
                 const res = await Promise.all(langs.map(async l => {
                     const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${l}&dt=t&q=${encodeURI(text)}`);
                     const d = await r.json(); return d[0][0][0];
@@ -332,6 +322,7 @@
             canvas.innerHTML = '';
             
             if (mode === 'kinetic') {
+                wrap.style.overflowY = 'hidden';
                 canvas.className = 'stream-container';
                 canvas.style.display = 'flex';
                 const canvasH = wrap.offsetHeight;
@@ -355,34 +346,42 @@
                     canvas.appendChild(rowDiv);
                 }
             } else {
-                // Swiss Vertical: 网格填充逻辑
-                canvas.className = 'grid-layout';
+                // Swiss Vertical: Vertical List Layout
+                wrap.style.overflowY = 'auto';
+                canvas.className = 'swiss-grid';
                 canvas.style.display = 'grid';
+                canvas.style.gridTemplateColumns = `repeat(${density}, 1fr)`;
                 
-                // 根据 Density 计算网格大小（DENSITY 越大，单元格越小）
-                const cellSize = Math.max(20, 1000 / density) * fontScale;
-                canvas.style.setProperty('--cell-w', cellSize + 'px');
-                canvas.style.setProperty('--cell-h', (cellSize * 0.6) + 'px');
-
-                // 填充足够多的单元格以覆盖面板
-                const totalCells = density * 5; // 预估填充量
-                for (let i = 0; i < totalCells; i++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'u global-font';
-                    cell.innerText = pool[(i + seed) % pool.length];
-                    cell.style.color = txtCol;
-                    cell.style.fontSize = (cellSize * 0.4) + "px";
-                    cell.style.setProperty('--stretch-val', 1 + stretch * 2); // 伸缩比例
-                    const animDuration = 1.5 + (i % 5) * 0.2;
-                    cell.style.animation = `sS ${animDuration}s ease-in-out infinite`;
-                    canvas.appendChild(cell);
+                // We create 'density' number of columns, each containing the full 40 translations
+                for (let colIdx = 0; colIdx < density; colIdx++) {
+                    const unit = document.createElement('div');
+                    unit.className = 'swiss-unit';
+                    
+                    pool.forEach((txt, idx) => {
+                        const span = document.createElement('span');
+                        span.className = 'u global-font';
+                        span.innerText = txt;
+                        span.style.color = txtCol;
+                        
+                        // Font size logic: Responsive to column count and scale
+                        const baseFontSize = (wrap.offsetWidth / density / 10) * fontScale;
+                        span.style.fontSize = baseFontSize + "px";
+                        
+                        // Stretch logic
+                        span.style.setProperty('--stretch-val', 1 + stretch * 3);
+                        const animDuration = 0.8 + ((idx + colIdx + seed) % 5) * 0.4;
+                        span.style.animation = `sS ${animDuration}s ease-in-out infinite`;
+                        
+                        unit.appendChild(span);
+                    });
+                    canvas.appendChild(unit);
                 }
             }
         }
 
         window.copyDynamicEmbed = () => { 
             const btn = document.getElementById('export-btn');
-            btn.innerText = "COPIED_TO_CLIPBOARD";
+            btn.innerText = "COPIED_T0_CLIPBOARD";
             setTimeout(() => btn.innerText = "EXPORT_DYNAMIC_EMBED", 2000);
         };
 
@@ -392,7 +391,6 @@
         };
 
         window.addEventListener('resize', render);
-        // 初始化
         document.getElementById('in-mode').dispatchEvent(new Event('change'));
         fetchL(document.getElementById('in-text').value);
     })();
