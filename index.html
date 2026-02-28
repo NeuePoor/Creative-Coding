@@ -3,7 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BABEL_GEN_v5.5</title>
+    
+    <!-- 基础 SEO 设置 -->
+    <title>BABEL_GEN v5.6 - 动态文字翻译生成器</title>
+    <meta name="description" content="BABEL_GEN 是一款强大的动态文字翻译展示工具，支持多种动态视觉预设，适合艺术展示、社交媒体分享及动效设计。">
+    <meta name="keywords" content="翻译, 动态文字, 视觉设计, BABEL_GEN, 动效生成器, 文字艺术">
+    <meta name="author" content="fo/poorlegalguy">
+    <link rel="canonical" href="https://lab.neuepoor.com/">
+
+    <!-- 社交媒体分享 (Open Graph - 用于微信、Facebook, LinkedIn 等) -->
+    <meta property="og:type" content="NeuepoorLab">
+    <meta property="og:url" content="https://lab.neuepoor.com/">
+    <meta property="og:title" content="BABEL_GEN v5.6 - 全球语言动态视觉生成器">
+    <meta property="og:description" content="一键将文字转化为多国语言的动态艺术列表。支持 Swiss Vertical 与 Kinetic Warp 等多种专业动效预设。">
+    <meta property="og:image" content="https://your-domain.com/preview-image.jpg"> <!-- 分享时的预览图地址，建议 1200x630px -->
+
+    <!-- Twitter 卡片设置 -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://lab.neuepoor.com/">
+    <meta name="twitter:title" content="BABEL_GEN v5.6 - 动态文字翻译生成器">
+    <meta name="twitter:description" content="探索文字与语言的视觉边界，BABEL_GEN 为你提供极致的动态排版体验。">
+    <meta name="twitter:image" content="https://your-domain.com/preview-image.jpg">
+
+    <!-- 网站图标 (Favicon) -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&family=Noto+Sans+SC:wght@900&family=Noto+Sans+JP:wght@900&family=Noto+Sans+KR:wght@900&family=Noto+Sans+Thai:wght@900&family=Noto+Sans+Arabic:wght@900&family=Noto+Sans+Devanagari:wght@900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -56,7 +80,6 @@
             width: 100%; 
         }
 
-        /* 侧边栏优化 */
         #panel { 
             width: var(--p-base); 
             height: 100%; 
@@ -111,35 +134,56 @@
         input[type="color"] { appearance: none; border: none; background: none; width: 20px; height: 20px; cursor: pointer; }
         .color-label { font-size: 8px; color: #666; margin-left: 5px; }
 
-        /* 画布区域：始终占据剩余空间 */
         #canvas-wrap { 
             flex: 1; 
             background: var(--bg); 
-            overflow: hidden; 
             position: relative; 
             height: 100%;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
         
         #grid-canvas { 
-            flex: 1; 
             width: 100%; 
             height: 100%; 
-            overflow: hidden;
+            position: relative;
         }
 
-        /* 预设样式 */
-        .static-container { width: 100%; height: 100%; overflow-y: auto; padding: 40px 0; display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        .static-line { font-size: 24px; font-weight: 900; text-align: center; text-transform: uppercase; width: 90%; animation: blurCycle 5s ease-in-out infinite; line-height: 1.1; }
-        
-        @keyframes blurCycle { 0%, 100% { filter: blur(0px); opacity: 1; } 50% { filter: blur(5px); opacity: 0.3; } }
+        .static-container { 
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch;
+            padding: 60px 0 120px 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 20px; 
+            z-index: 50;
+        }
+        .static-container::-webkit-scrollbar { width: 4px; }
+        .static-container::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
-        .stream-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
+        .static-line { 
+            font-size: 26px; 
+            font-weight: 900; 
+            text-align: center; 
+            text-transform: uppercase; 
+            width: 85%; 
+            animation: blurCycle 5s ease-in-out infinite; 
+            line-height: 1.2; 
+            flex-shrink: 0; 
+            display: block;
+        }
+        
+        @keyframes blurCycle { 0%, 100% { filter: blur(0px); opacity: 1; } 50% { filter: blur(4px); opacity: 0.4; } }
+
+        .stream-container { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; }
         .stream-row { flex: 1; display: flex; align-items: center; white-space: nowrap; overflow: hidden; border-bottom: 0.1px solid rgba(255,255,255,0.05); }
         .stream-track { display: flex; will-change: transform; }
 
-        .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cell-w), 1fr)); grid-auto-rows: minmax(var(--cell-h), 1fr); width: 100%; height: 100%; }
+        .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cell-w), 1fr)); grid-auto-rows: minmax(var(--cell-h), 1fr); width: 100%; height: 100%; overflow: hidden; }
 
         .u { display: flex; align-items: center; justify-content: center; font-weight: 900; text-transform: uppercase; white-space: nowrap; padding: 0 10px; line-height: 1; overflow: hidden; }
 
@@ -148,12 +192,12 @@
         @keyframes marqueeR { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
 
         .export-section { background: #111; padding: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
-        .export-btn { background: #fff; color: #000; border: none; padding: 12px; font-weight: 900; font-size: 10px; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .export-btn { background: #fff; color: #000; border: none; padding: 12px; font-weight: 900; font-size: 10px; cursor: pointer; transition: all 0.2s; text-align: center; width: 100%; }
         .export-btn:hover { background: #eee; }
 
         @media (max-width: 900px) {
             #app-body { flex-direction: column; }
-            #panel { width: 100% !important; height: 40dvh; border-right: none; border-bottom: 1px solid #111; margin-left: 0; }
+            #panel { width: 100% !important; height: 35dvh; border-right: none; border-bottom: 1px solid #111; margin-left: 0; }
             #panel.collapsed { transform: translateY(-100%); height: 0 !important; margin-left: 0; }
             .p-scroll { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
             .full { grid-column: span 2; }
@@ -164,7 +208,7 @@
 
     <nav id="navbar">
         <div id="nav-left"><button id="toggle-btn" onclick="toggleP()">✕</button></div>
-        <div id="nav-right"><span class="nav-version">BABEL_GEN_v5.5</span></div>
+        <div id="nav-right"><span class="nav-version">BABEL_GEN_v5.6</span></div>
     </nav>
 
     <div id="app-body">
@@ -207,9 +251,10 @@
                     </div>
                 </div>
                 <div class="item full">
-                    <label>EXPORT</label>
+                    <label>ACTION</label>
                     <div class="export-section">
-                        <button class="export-btn" id="export-motion-btn" onclick="exportMotionCode()">Export Motion Code</button>
+                        <button class="export-btn" id="export-motion-btn" onclick="exportMotionCode()">EXPORT MOTION CODE</button>
+                        <button class="export-btn" id="donate-btn" onclick="handleDonate()">DONATE</button>
                     </div>
                 </div>
             </div>
@@ -222,7 +267,6 @@
 
     <script>
     (function() {
-        // 配置初始值修复：kinetic 现在默认为白色
         const PRESET_CONFIGS = {
             default: { hideControls: true, colorTxt: "#ffffff", colorBg: "#000000" },
             swiss: { stretch: 1.0, stretchMin: 0.1, stretchMax: 1.0, font: 2.0, rows: 200, seed: 1, labelStretch: "STRETCH", colorTxt: "#ffffff", colorBg: "#000000", hideControls: false },
@@ -237,7 +281,6 @@
         window.toggleP = () => {
             const isC = panel.classList.toggle('collapsed');
             document.getElementById('toggle-btn').innerText = isC ? '⚙' : '✕';
-            // 动画结束后触发重绘，确保容器尺寸已更新
             setTimeout(render, 310);
         };
 
@@ -308,15 +351,19 @@
             canvas.innerHTML = '';
             
             if (mode === 'default') {
-                canvas.className = 'static-container';
+                canvas.className = ''; 
+                const scrollContainer = document.createElement('div');
+                scrollContainer.className = 'static-container';
+                
                 pool.forEach((word, idx) => {
                     const line = document.createElement('div');
                     line.className = 'static-line global-font';
                     line.style.color = txtCol;
                     line.style.animationDelay = (idx * 0.1) + 's';
                     line.innerText = word;
-                    canvas.appendChild(line);
+                    scrollContainer.appendChild(line);
                 });
+                canvas.appendChild(scrollContainer);
             } else if (mode === 'kinetic') {
                 canvas.className = 'stream-container';
                 const canvasH = wrap.offsetHeight;
@@ -357,6 +404,12 @@
             }
         }
 
+        window.handleDonate = () => {
+            const btn = document.getElementById('donate-btn');
+            btn.innerText = "THANK YOU!";
+            setTimeout(() => btn.innerText = "DONATE", 2000);
+        };
+
         window.exportMotionCode = () => {
             const mode = document.getElementById('in-mode').value;
             const stretch = document.getElementById('in-stretch').value;
@@ -374,18 +427,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&family=Noto+Sans+SC:wght@900&family=Noto+Sans+JP:wght@900&family=Noto+Sans+KR:wght@900&family=Noto+Sans+Thai:wght@900&family=Noto+Sans+Arabic:wght@900&family=Noto+Sans+Devanagari:wght@900&display=swap" rel="stylesheet">
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: ${bgCol}; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: ${bgCol}; color: ${txtCol}; }
         .gf { font-family: 'Inter', 'Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans Thai', 'Noto Sans Arabic', 'Noto Sans Devanagari', sans-serif; }
-        #v { width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
-        .u { display: flex; align-items: center; justify-content: center; font-weight: 900; text-transform: uppercase; white-space: nowrap; padding: 0 10px; line-height: 1; overflow: hidden; }
-        @keyframes sS { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(var(--sv)); } }
+        #v { width: 100%; height: 100%; position: relative; }
+        .sc { position: absolute; top:0; left:0; right:0; bottom:0; overflow-y: auto; padding: 40px 0 100px 0; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .si { font-size: 26px; font-weight: 900; text-align: center; text-transform: uppercase; width: 85%; animation: bC 5s ease-in-out infinite; line-height: 1.2; flex-shrink: 0; }
+        @keyframes bC { 0%, 100% { filter: blur(0px); opacity: 1; } 50% { filter: blur(4px); opacity: 0.4; } }
+        .sr { height: calc(100% / ${density}); display: flex; align-items: center; white-space: nowrap; overflow: hidden; }
+        .st { display: flex; will-change: transform; }
+        .u { display: flex; align-items: center; justify-content: center; font-weight: 900; text-transform: uppercase; padding: 0 10px; }
         @keyframes mL { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         @keyframes mR { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
-        @keyframes bC { 0%, 100% { filter: blur(0px); opacity: 1; } 50% { filter: blur(5px); opacity: 0.3; } }
-        .si { font-size: 4vh; font-weight: 900; text-align: center; text-transform: uppercase; width: 90%; animation: bC 5s ease-in-out infinite; color: ${txtCol}; margin: 2vh auto; line-height: 1.1; }
-        .sr { flex: 1; display: flex; align-items: center; white-space: nowrap; overflow: hidden; border-bottom: 0.1px solid rgba(255,255,255,0.05); }
-        .st { display: flex; will-change: transform; }
         .gl { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cw), 1fr)); grid-auto-rows: minmax(var(--ch), 1fr); width: 100%; height: 100%; }
+        @keyframes sS { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(var(--sv)); } }
     </style>
 </head>
 <body class="gf">
@@ -397,10 +451,12 @@
             v.innerHTML = '';
             const m = "${mode}";
             if(m === 'default') {
+                const sc = document.createElement('div'); sc.className='sc';
                 p.forEach((t, i) => {
                     const el = document.createElement('div'); el.className = 'si';
-                    el.style.animationDelay = (i * 0.1) + 's'; el.innerText = t; v.appendChild(el);
+                    el.style.animationDelay = (i * 0.1) + 's'; el.innerText = t; sc.appendChild(el);
                 });
+                v.appendChild(sc);
             } else if(m === 'kinetic') {
                 const h = window.innerHeight; const de = ${density}; const fs = ${fontScale}; const st = ${stretch};
                 const ch = Math.max(2, h / de);
@@ -409,7 +465,7 @@
                     const tr = document.createElement('div'); tr.className = 'st';
                     let c = ""; for(let i=0; i<12; i++) {
                         const w = p[(r+i+${seed})%p.length];
-                        c += \`<span class="u" style="color:${txtCol}; font-size:\${ch*0.8*fs}px">\${w}</span>\`;
+                        c += \`<span class="u" style="font-size:\${ch*0.8*fs}px">\${w}</span>\`;
                     }
                     tr.innerHTML = c + c;
                     tr.style.animation = \`\${r%2===0?'mL':'mR'} \${(1/st)*5+(r%3)}s linear infinite\`;
@@ -421,8 +477,8 @@
                 v.style.setProperty('--cw', cs+'px'); v.style.setProperty('--ch', (cs*0.6)+'px');
                 for(let i=0; i<Math.min(500, de*5); i++) {
                     const c = document.createElement('div'); c.className = 'u';
-                    c.innerText = p[(i+${seed})%p.length]; c.style.color = '${txtCol}';
-                    c.style.fontSize = (cs*0.4)+'px'; c.style.setProperty('--sv', 1+st*2);
+                    c.innerText = p[(i+${seed})%p.length]; c.style.fontSize = (cs*0.4)+'px'; 
+                    c.style.setProperty('--sv', 1+st*2);
                     c.style.animation = \`sS \${1.5+(i%5)*0.2}s ease-in-out infinite\`;
                     v.appendChild(c);
                 }
@@ -437,8 +493,8 @@
             try {
                 document.execCommand('copy');
                 const btn = document.getElementById('export-motion-btn');
-                btn.innerText = "COPIED TO CLIPBOARD!"; btn.style.background = "#fff";
-                setTimeout(() => btn.innerText = "Export Motion Code", 2000);
+                btn.innerText = "COPIED TO CLIPBOARD!";
+                setTimeout(() => btn.innerText = "EXPORT MOTION CODE", 2000);
             } catch (err) {}
             document.body.removeChild(ta);
         };
@@ -449,7 +505,6 @@
         };
 
         window.addEventListener('resize', render);
-        // 初始化
         document.getElementById('in-mode').dispatchEvent(new Event('change'));
         fetchL(document.getElementById('in-text').value);
     })();
